@@ -1,0 +1,234 @@
+---
+title: "Projeto Datasus"
+output:
+  pdf_document: default
+  html_notebook: default
+  html_document:
+    df_print: paged
+  word_document: default
+---
+```{r}
+options(repos = "https://cran.rstudio.com/")
+# Install and load required packages
+install.packages(c("readr", "ggplot2", "dplyr"))
+
+# Load required libraries
+library(readr)
+library(ggplot2)
+library(dplyr)
+
+
+```
+
+
+```{r}
+df <- read.csv('C:/Users/PICHAU/downloads/SINASC_2021.csv', sep=';')
+```
+
+
+```{r}
+print(head(df, 5))
+```
+
+
+```{r}
+
+# análise bivariada
+
+# Install and load required packages
+
+# Mapear os novos valores para a coluna 'LOCNASC'
+locnasc_mapping <- c("1" = "Hospital", "2" = "Outros estabelecimentos de saúde", 
+                     "3" = "Domicílio", "4" = "Outros", "5" = "Aldeia Indígena", "9" = "Ignorado")
+df$LOCNASC <- factor(df$LOCNASC, levels = names(locnasc_mapping), labels = locnasc_mapping)
+
+# Box plot: Idade das mães por local de nascimento
+ggplot(df, aes(x = LOCNASC, y = IDADEMAE)) +
+  geom_boxplot(fill = 'salmon') +
+  labs(title = 'Box Plot: Idade das Mães por Local de Nascimento',
+       x = 'Local de Nascimento', y = 'Idade da Mãe') +
+  theme_minimal()
+
+
+
+```
+```{r}
+locnasc_counts <- table(df$LOCNASC)
+
+print(locnasc_counts)
+
+```
+
+```{r}
+# Load required libraries
+library(ggplot2)
+library(dplyr)
+
+# Mapear os novos valores para a coluna 'PARTO'
+parto_mapping <- c("1" = "Vaginal", "2" = "Cesário", "9" = "Ignorado")
+df$PARTO <- factor(df$PARTO, levels = names(parto_mapping), labels = parto_mapping)
+
+# Mapear os novos valores para a coluna 'ESCMAE'
+escmae_mapping <- c("1" = "Nenhuma", "2" = "1 a 3 anos", "3" = "4 a 7 anos", 
+                    "4" = "8 a 11 anos", "5" = "12 e mais", "9" = "Ignorado")
+df$ESCMAE <- factor(df$ESCMAE, levels = names(escmae_mapping), labels = escmae_mapping)
+
+# Count plot interativo: Escolaridade da mãe por tipo de parto
+ggplot(df, aes(x = ESCMAE, fill = PARTO)) +
+  geom_bar(position = 'dodge') +
+  labs(title = 'Relação entre Escolaridade da Mãe e Tipo de Parto',
+       x = 'Escolaridade da Mãe',
+       y = 'Contagem') +
+  theme_minimal()
+
+
+
+```
+```{r}
+# Load required libraries
+library(ggplot2)
+
+# Scatter plot: Idade da mãe vs. Idade do pai
+ggplot(df, aes(x = IDADEMAE, y = IDADEPAI)) +
+  geom_point(alpha = 0.7) +
+  labs(title = 'Relação entre Idade da Mãe e Idade do Pai',
+       x = 'Idade da Mãe',
+       y = 'Idade do Pai') +
+  theme_minimal()
+
+```
+```{r}
+# Load required libraries
+library(ggplot2)
+
+# Mapear os novos valores para a coluna 'ESTCIVMAE'
+estcivmae_mapping <- c("1" = "Solteira", "2" = "Casada", "3" = "Viúva", 
+                       "4" = "divorciada", 
+                       "5" = "União estável", "9" = "Ignorada")
+df$ESTCIVMAE <- factor(df$ESTCIVMAE, levels = names(estcivmae_mapping), labels = estcivmae_mapping)
+
+# Box plot: Peso ao nascer por estado civil da mãe
+ggplot(df, aes(x = ESTCIVMAE, y = PESO)) +
+  geom_boxplot(fill = 'salmon') +
+  labs(title = 'Distribuição do Peso ao Nascer por Estado Civil da Mãe',
+       x = 'Estado Civil da Mãe',
+       y = 'Peso ao Nascer') +
+  theme_minimal()
+
+```
+```{r}
+# Carregue as bibliotecas necessárias
+library(ggplot2)
+library(dplyr)
+
+# Crie um gráfico de dispersão com uma linha de regressão
+p <- ggplot(df, aes(x = IDADEMAE, y = PESO)) +
+  geom_point() +
+  geom_smooth(method = 'lm', se = FALSE, color = 'blue') +
+  labs(title = 'Relação entre Peso ao Nascer e Idade da Mãe',
+       x = 'Idade da Mãe',
+       y = 'Peso ao Nascer') +
+  theme_minimal()
+
+# Exiba o gráfico
+print(p)
+
+# Calcule a correlação entre peso ao nascer e idade da mãe
+correlation <- cor(df$IDADEMAE, df$PESO)
+cat("Correlação entre Idade da Mãe e Peso ao Nascer:", correlation, "\n")
+
+# Ajuste um modelo de regressão linear
+model <- lm(PESO ~ IDADEMAE, data = df)
+summary(model)
+```
+
+
+```{r}
+# Instale e carregue os pacotes necessários
+install.packages(c("ggplot2", "dplyr"))
+
+# Carregue as bibliotecas necessárias
+library(ggplot2)
+library(dplyr)
+
+# Remover linhas com valores não finitos
+#df <- na.omit(df)
+
+# Remover linhas com valores ausentes específicos para a criação do gráfico de dispersão
+df_scatter <- df[complete.cases(df$IDADEMAE, df$PESO), ]
+
+# Definindo os intervalos de idade
+intervalos <- seq(0, 60, 5)
+labels <- sprintf('%d-%d', intervalos[-length(intervalos)], intervalos[-1])
+
+# Criando uma nova coluna no DataFrame para a faixa etária
+df$FAIXA_ETARIA <- cut(df$IDADEMAE, breaks = intervalos, labels = labels, include.lowest = TRUE)
+
+# Criando o gráfico de barras empilhadas
+p <- ggplot(df, aes(x = FAIXA_ETARIA, fill = ..count..)) +
+  geom_bar() +
+  geom_text(stat = 'count', aes(label = ..count..), vjust = -0.5, size = 3) +
+  labs(title = 'Distribuição da Idade das Mães em Faixas Etárias de 5 anos',
+       x = 'Faixa Etária',
+       y = 'Contagem') +
+  theme_minimal()
+
+# Exibindo o gráfico
+print(p)
+
+# Criando o gráfico de dispersão
+p_scatter <- ggplot(df_scatter, aes(x = IDADEMAE, y = PESO)) +
+  geom_point() +
+  geom_smooth(method = 'lm', se = FALSE, color = 'blue') +
+  labs(title = 'Relação entre Peso ao Nascer e Idade da Mãe',
+       x = 'Idade da Mãe',
+       y = 'Peso ao Nascer') +
+  theme_minimal()
+
+# Exibindo o gráfico de dispersão
+print(p_scatter)
+
+```
+
+```{r}
+
+# Contagem das faixas etárias
+contagem_faixas <- df %>%
+  group_by(FAIXA_ETARIA) %>%
+  summarise(Contagem = n())
+
+# Criando o gráfico de barras
+p <- ggplot(contagem_faixas, aes(x = FAIXA_ETARIA, y = Contagem, fill = FAIXA_ETARIA)) +
+  geom_col() +
+  geom_text(aes(label = Contagem), vjust = -0.5, size = 3) +
+  labs(title = 'Distribuição da Idade das Mães em Faixas Etárias de 5 anos',
+       x = 'Faixa Etária',
+       y = 'Contagem') +
+  theme_minimal()
+
+# Exibindo o gráfico
+print(p)
+
+
+
+```
+
+
+```{r}
+# Carregar bibliotecas
+library(ggplot2)
+
+# Gráfico de violino invertendo os eixos x e y
+p <- ggplot(df, aes(x = PESO, y = factor(1), fill = "Distribuição dos pesos")) +
+  geom_violin() +
+  labs(title = 'Distribuição do Peso ao Nascer',
+       x = 'Peso ao Nascer (gramas)',
+       y = NULL) +
+  theme_minimal() 
+
+# Exibir o gráfico
+print(p)
+
+
+```
+
